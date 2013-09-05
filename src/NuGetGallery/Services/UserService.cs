@@ -11,15 +11,18 @@ namespace NuGetGallery
     {
         public IAppConfiguration Config { get; protected set; }
         public IEntityRepository<User> UserRepository { get; protected set; }
+        public ILdapService LdapService { get; set; }
 
         protected UserService() {}
 
         public UserService(
             IAppConfiguration config,
-            IEntityRepository<User> userRepository) : this()
+            IEntityRepository<User> userRepository,ILdapService ldapService
+            ) : this()
         {
             Config = config;
             UserRepository = userRepository;
+            LdapService = ldapService;
         }
 
         public virtual User Create(
@@ -142,22 +145,29 @@ namespace NuGetGallery
             // TODO: validate input
 
             var user = FindByUsername(usernameOrEmail)
-                       ?? FindByEmailAddress(usernameOrEmail);
+                       ?? FindByEmailAddress(usernameOrEmail)
+                       ?? LdapService.AutoEnroll(usernameOrEmail,password)
+                       ;
 
             if (user == null)
             {
                 return null;
             }
 
-            if (!Crypto.ValidateSaltedHash(user.HashedPassword, password, user.PasswordHashAlgorithm))
+            if (!LdapService.Enabled)
             {
-                return null;
-            }
-            else if (!user.PasswordHashAlgorithm.Equals(Constants.PBKDF2HashAlgorithmId, StringComparison.OrdinalIgnoreCase))
-            {
-                // If the user can be authenticated and they are using an older password algorithm, migrate them to the current one.
-                ChangePasswordInternal(user, password);
-                UserRepository.CommitChanges();
+                if (!Crypto.ValidateSaltedHash(user.HashedPassword, password, user.PasswordHashAlgorithm))
+                {
+                    return null;
+                }
+                else if (
+                    !user.PasswordHashAlgorithm.Equals(Constants.PBKDF2HashAlgorithmId,
+                                                       StringComparison.OrdinalIgnoreCase))
+                {
+                    // If the user can be authenticated and they are using an older password algorithm, migrate them to the current one.
+                    ChangePasswordInternal(user, password);
+                    UserRepository.CommitChanges();
+                }
             }
 
             return user;

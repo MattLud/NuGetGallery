@@ -146,6 +146,7 @@ namespace NuGetGallery
                 // Passing in scheme to force fully qualified URL
                 var confirmationUrl = Url.ConfirmationUrl(
                     MVC.Users.Confirm(), user.Username, user.EmailConfirmationToken, protocol: Request.Url.Scheme);
+                //Not sure about this either...
                 MessageService.SendNewAccountEmail(new MailAddress(request.EmailAddress, user.Username), confirmationUrl);
             }
             return RedirectToAction(MVC.Users.Thanks());

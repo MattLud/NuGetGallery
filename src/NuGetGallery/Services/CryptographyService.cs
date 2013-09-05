@@ -7,7 +7,7 @@ using System.Web.Helpers;
 
 namespace NuGetGallery
 {
-    public class CryptographyService
+    public class CryptographyService 
     {
         private const int SaltLengthInBytes = 16;
 

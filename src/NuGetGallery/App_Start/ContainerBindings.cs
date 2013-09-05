@@ -101,6 +101,10 @@ namespace NuGetGallery
                 .To<PackageService>()
                 .InRequestScope();
 
+            Bind<ILdapService>()
+                .To<LdapService>()
+                .InRequestScope();
+
             Bind<EditPackageService>().ToSelf();
 
             Bind<IFormsAuthenticationService>()
@@ -132,7 +136,8 @@ namespace NuGetGallery
                                 DeliveryMethod = SmtpDeliveryMethod.Network,
                                 Host = smtpUri.Host,
                                 Port = smtpUri.Port,
-                                EnableSsl = smtpUri.Secure
+                                EnableSsl = smtpUri.Secure,
+                                UseDefaultCredentials = true
                             };
 
                         if (!String.IsNullOrWhiteSpace(smtpUri.UserName))
